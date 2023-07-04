@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/items/{itemId}/comments")
 public class CommentController {
+
     private final CommentService commentService;
 
     @PostMapping

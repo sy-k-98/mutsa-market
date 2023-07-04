@@ -54,7 +54,6 @@ public class ItemService {
                 pageNumber, pageSize, Sort.by("id")
         );
         Page<SalesItem> salesItemPage = itemRepository.findAll(pageable);
-
         Page<ItemWithIDResponseDto> ItemDtoPage = salesItemPage.map(ItemWithIDResponseDto::fromEntity);
         return ItemDtoPage;
     }
@@ -115,12 +114,12 @@ public class ItemService {
         itemRepository.save(salesItem);
     }
 
-    public void deletePost(Long id, UserDto userDto) {
+    public void deletePost(Long id, UserDto dto) {
         if (!itemRepository.existsById(id))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 
         SalesItem salesItem = itemRepository.findById(id).get();
-        if (!userDto.getPassword().equals(salesItem.getPassword()))
+        if (!dto.getPassword().equals(salesItem.getPassword()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
         itemRepository.deleteById(id);

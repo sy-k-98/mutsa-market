@@ -40,7 +40,6 @@ public class CommentService {
                 0, 25, Sort.by("id")
         );
         Page<Comment> commentPage = commentRepository.findAll(pageable);
-
         Page<CommentResponseDto> commentResponseDtoPage = commentPage.map(CommentResponseDto::fromEntity);
         return commentResponseDtoPage;
     }
@@ -80,15 +79,14 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
-    public void deleteComment(Long itemId, Long commentId, UserDto userDto) {
+    public void deleteComment(Long itemId, Long commentId, UserDto dto) {
         if (!itemRepository.existsById(itemId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         if (!commentRepository.existsById(commentId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 
-        Optional<Comment> optionalComment = commentRepository.findById(commentId);
-        Comment comment = optionalComment.get();
-        if (!userDto.getPassword().equals(comment.getPassword()))
+        Comment comment = commentRepository.findById(commentId).get();
+        if (!dto.getPassword().equals(comment.getPassword()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
         commentRepository.deleteById(commentId);
