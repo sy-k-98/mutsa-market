@@ -4,6 +4,7 @@ import com.likelion.market.dto.ItemWithIDResponseDto;
 import com.likelion.market.dto.ItemDto;
 import com.likelion.market.dto.ItemWithoutIDResponseDto;
 import com.likelion.market.dto.UserDto;
+import com.likelion.market.entity.Comment;
 import com.likelion.market.entity.SalesItem;
 import com.likelion.market.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
@@ -58,17 +59,19 @@ public class ItemService {
         return ItemDtoPage;
     }
 
-    public void updatePost(Long id, ItemWithIDResponseDto dto) {
+    public void updatePost(Long id, ItemDto dto) {
         Optional<SalesItem> optionalItem = itemRepository.findById(id);
         if (optionalItem.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 
         SalesItem salesItem = optionalItem.get();
+        if (!dto.getPassword().equals(salesItem.getPassword()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+
         salesItem.setTitle(dto.getTitle());
         salesItem.setDescription(dto.getDescription());
         salesItem.setImageUrl(dto.getImageUrl());
         salesItem.setMinPriceWanted(dto.getMinPriceWanted());
-        salesItem.setStatus("판매중");
 
         itemRepository.save(salesItem);
     }
@@ -80,7 +83,7 @@ public class ItemService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         // 입력한 비밀번호와 원래 아이템의 비밀번호가 일치하는지 확안
         if (!optionalItem.get().getPassword().equals(password))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
         // 폴더 만들기
         String profileDir = String.format("media/%d/", id);
@@ -113,9 +116,13 @@ public class ItemService {
     }
 
     public void deletePost(Long id, UserDto userDto) {
-        if (itemRepository.existsById(id))
-            if (userDto.getPassword().equals(itemRepository.findById(id).get().getPassword()))
-                itemRepository.deleteById(id);
-        else throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        if (!itemRepository.existsById(id))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+
+        SalesItem salesItem = itemRepository.findById(id).get();
+        if (!userDto.getPassword().equals(salesItem.getPassword()))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+
+        itemRepository.deleteById(id);
     }
 }

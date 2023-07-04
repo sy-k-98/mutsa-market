@@ -1,7 +1,7 @@
 package com.likelion.market.entity;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -13,18 +13,23 @@ public class SalesItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     private String title;
 
+    @NotNull
     private String description;
 
     @Column(name = "image_url")
     private String imageUrl;
 
+    @NotNull
     private Integer minPriceWanted;
 
     private String status;
 
+    @NotNull
     private String writer;
 
+    @NotNull
     private String password;
 }

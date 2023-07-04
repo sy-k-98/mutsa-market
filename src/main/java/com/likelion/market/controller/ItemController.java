@@ -38,7 +38,7 @@ public class ItemController {
     }
 
     @PutMapping("/{itemId}")
-    public MessageDto update(@PathVariable("itemId") Long id, @RequestBody ItemWithIDResponseDto itemDto) {
+    public MessageDto update(@PathVariable("itemId") Long id, @RequestBody ItemDto itemDto) {
         itemService.updatePost(id, itemDto);
         MessageDto response = new MessageDto();
         response.setMessage("물품이 수정되었습니다.");
