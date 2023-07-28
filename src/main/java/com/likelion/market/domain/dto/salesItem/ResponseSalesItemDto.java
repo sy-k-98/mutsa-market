@@ -1,22 +1,20 @@
-package com.likelion.market.dto;
+package com.likelion.market.domain.dto.salesItem;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.likelion.market.entity.SalesItem;
+import com.likelion.market.domain.entity.SalesItem;
 import lombok.Data;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ItemWithIDResponseDto {
-    private Long id;
+public class ResponseSalesItemDto {
     private String title;
     private String description;
     private String imageUrl;
     private Integer minPriceWanted;
     private String status;
 
-    public static ItemWithIDResponseDto fromEntity(SalesItem entity) {
-        ItemWithIDResponseDto dto = new ItemWithIDResponseDto();
-        dto.setId(entity.getId());
+    public static ResponseSalesItemDto fromEntity(SalesItem entity) {
+        ResponseSalesItemDto dto = new ResponseSalesItemDto();
         dto.setTitle(entity.getTitle());
         dto.setDescription(entity.getDescription());
         dto.setImageUrl(entity.getImageUrl());

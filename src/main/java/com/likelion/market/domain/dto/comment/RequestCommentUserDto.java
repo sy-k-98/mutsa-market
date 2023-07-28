@@ -1,9 +1,9 @@
-package com.likelion.market.dto;
+package com.likelion.market.domain.dto.comment;
 
 import lombok.Data;
 
 @Data
-public class UserDto {
+public class RequestCommentUserDto {
     private String writer;
     private String password;
 }

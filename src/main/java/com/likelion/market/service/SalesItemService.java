@@ -1,12 +1,11 @@
 package com.likelion.market.service;
 
-import com.likelion.market.dto.ItemWithIDResponseDto;
-import com.likelion.market.dto.ItemDto;
-import com.likelion.market.dto.ItemWithoutIDResponseDto;
-import com.likelion.market.dto.UserDto;
-import com.likelion.market.entity.Comment;
-import com.likelion.market.entity.SalesItem;
-import com.likelion.market.repository.ItemRepository;
+import com.likelion.market.domain.dto.comment.RequestCommentUserDto;
+import com.likelion.market.repository.SalesItemRepository;
+import com.likelion.market.domain.dto.salesItem.RequestSalesItemDto;
+import com.likelion.market.domain.dto.salesItem.ResponseSalesItemsDto;
+import com.likelion.market.domain.dto.salesItem.ResponseSalesItemDto;
+import com.likelion.market.domain.entity.SalesItem;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -26,39 +25,31 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ItemService {
-    private final ItemRepository itemRepository;
+public class SalesItemService {
+    private final SalesItemRepository itemRepository;
 
-    public void createPost(ItemDto dto) {
-        SalesItem salesItem = new SalesItem();
-        salesItem.setTitle(dto.getTitle());
-        salesItem.setDescription(dto.getDescription());
-        salesItem.setImageUrl(dto.getImageUrl());
-        salesItem.setMinPriceWanted(dto.getMinPriceWanted());
-        salesItem.setStatus("판매중");
-        salesItem.setWriter(dto.getWriter());
-        salesItem.setPassword(dto.getPassword());
-
+    public void createPost(RequestSalesItemDto dto) {
+        SalesItem salesItem = SalesItem.fromDto(dto);
         itemRepository.save(salesItem);
     }
 
-    public ItemWithoutIDResponseDto readPost(Long id) {
+    public ResponseSalesItemDto readPost(Long id) {
         Optional<SalesItem> salesItem = itemRepository.findById(id);
         if (salesItem.isPresent())
-            return ItemWithoutIDResponseDto.fromEntity(salesItem.get());
+            return ResponseSalesItemDto.fromEntity(salesItem.get());
         else throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    public Page<ItemWithIDResponseDto> readPostPaged(Integer pageNumber, Integer pageSize) {
+    public Page<ResponseSalesItemsDto> readPostPaged(Integer pageNumber, Integer pageSize) {
         Pageable pageable = PageRequest.of(
                 pageNumber, pageSize, Sort.by("id")
         );
         Page<SalesItem> salesItemPage = itemRepository.findAll(pageable);
-        Page<ItemWithIDResponseDto> ItemDtoPage = salesItemPage.map(ItemWithIDResponseDto::fromEntity);
+        Page<ResponseSalesItemsDto> ItemDtoPage = salesItemPage.map(ResponseSalesItemsDto::fromEntity);
         return ItemDtoPage;
     }
 
-    public void updatePost(Long id, ItemDto dto) {
+    public void updatePost(Long id, RequestSalesItemDto dto) {
         Optional<SalesItem> optionalItem = itemRepository.findById(id);
         if (optionalItem.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -114,7 +105,7 @@ public class ItemService {
         itemRepository.save(salesItem);
     }
 
-    public void deletePost(Long id, UserDto dto) {
+    public void deletePost(Long id, RequestCommentUserDto dto) {
         if (!itemRepository.existsById(id))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 

@@ -1,10 +1,13 @@
 package com.likelion.market.service;
 
-import com.likelion.market.dto.*;
-import com.likelion.market.entity.Comment;
-import com.likelion.market.entity.SalesItem;
+import com.likelion.market.domain.dto.comment.RequestCommentUserDto;
+import com.likelion.market.domain.entity.Comment;
+import com.likelion.market.domain.dto.comment.RequestCommentDto;
+import com.likelion.market.domain.dto.comment.RequestCommentReplyDto;
+import com.likelion.market.domain.dto.comment.ResponseCommentDto;
 import com.likelion.market.repository.CommentRepository;
-import com.likelion.market.repository.ItemRepository;
+import com.likelion.market.domain.entity.SalesItem;
+import com.likelion.market.repository.SalesItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,33 +22,28 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class CommentService {
-    private final ItemRepository itemRepository;
+    private final SalesItemRepository salesItemRepository;
     private final CommentRepository commentRepository;
 
-    public void createComment(Long itemId, CommentDto dto) {
-        if (!itemRepository.existsById(itemId))
+    public void createComment(Long itemId, RequestCommentDto dto) {
+        if (!salesItemRepository.existsById(itemId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 
-        Comment comment = new Comment();
-        comment.setWriter(dto.getWriter());
-        comment.setPassword(dto.getPassword());
-        comment.setContent(dto.getContent());
-        comment.setReply(dto.getReply());
-
+        Comment comment = Comment.fromDto(dto);
         commentRepository.save(comment);
     }
 
-    public Page<CommentResponseDto> readComments(Long itemId) {
+    public Page<ResponseCommentDto> readComments(Long itemId) {
         Pageable pageable = PageRequest.of(
                 0, 25, Sort.by("id")
         );
         Page<Comment> commentPage = commentRepository.findAll(pageable);
-        Page<CommentResponseDto> commentResponseDtoPage = commentPage.map(CommentResponseDto::fromEntity);
+        Page<ResponseCommentDto> commentResponseDtoPage = commentPage.map(ResponseCommentDto::fromEntity);
         return commentResponseDtoPage;
     }
 
-    public void updateComment(Long itemId, Long commentId, CommentDto dto) {
-        Optional<SalesItem> optionalItem = itemRepository.findById(itemId);
+    public void updateComment(Long itemId, Long commentId, RequestCommentDto dto) {
+        Optional<SalesItem> optionalItem = salesItemRepository.findById(itemId);
         if (optionalItem.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 
@@ -61,8 +59,8 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
-    public void updateCommentReply(Long itemId, Long commentId, CommentReplyDto dto) {
-        Optional<SalesItem> optionalItem = itemRepository.findById(itemId);
+    public void createCommentReply(Long itemId, Long commentId, RequestCommentReplyDto dto) {
+        Optional<SalesItem> optionalItem = salesItemRepository.findById(itemId);
         if (optionalItem.isEmpty())
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
 
@@ -79,8 +77,8 @@ public class CommentService {
         commentRepository.save(comment);
     }
 
-    public void deleteComment(Long itemId, Long commentId, UserDto dto) {
-        if (!itemRepository.existsById(itemId))
+    public void deleteComment(Long itemId, Long commentId, RequestCommentUserDto dto) {
+        if (!salesItemRepository.existsById(itemId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         if (!commentRepository.existsById(commentId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
