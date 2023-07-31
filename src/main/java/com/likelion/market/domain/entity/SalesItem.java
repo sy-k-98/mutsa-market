@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Entity
 @Table(name = "sales_item")
@@ -29,9 +31,15 @@ public class SalesItem {
 
     private String status;
 
-    private String writer;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    private String password;
+    @OneToMany(mappedBy = "salesItem", cascade = CascadeType.ALL)
+    private List<Comment> comments;
+
+    @OneToMany(mappedBy = "salesItem", cascade = CascadeType.ALL)
+    private List<Negotiation> negotiations;
 
     public static SalesItem fromDto(RequestSalesItemDto requestSalesItemDto) {
         SalesItem salesItem = new SalesItem();
@@ -40,13 +48,16 @@ public class SalesItem {
         salesItem.setImageUrl(requestSalesItemDto.getImageUrl());
         salesItem.setMinPriceWanted(requestSalesItemDto.getMinPriceWanted());
         salesItem.setStatus("판매중");
-        salesItem.setWriter(requestSalesItemDto.getWriter());
-        salesItem.setPassword(requestSalesItemDto.getPassword());
 
         return salesItem;
     }
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+        user.getSalesItems().add(this);
     }
 }

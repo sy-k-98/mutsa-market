@@ -15,13 +15,13 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "salesItem_id")
-    private SalesItem item;
+    private SalesItem salesItem;
 
-    private String writer;
-
-    private String password;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     private String content;
 
@@ -29,12 +29,20 @@ public class Comment {
 
     public static Comment fromDto(RequestCommentDto commentDto) {
         Comment comment = new Comment();
-        comment.setWriter(commentDto.getWriter());
-        comment.setPassword(commentDto.getPassword());
         comment.setContent(commentDto.getContent());
         comment.setReply(commentDto.getReply());
 
         return comment;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+        user.getComments().add(this);
+    }
+
+    public void setSalesItem(SalesItem salesItem) {
+        this.salesItem = salesItem;
+        salesItem.getComments().add(this);
     }
 
 }
