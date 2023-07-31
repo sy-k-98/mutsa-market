@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class RequestSalesItemUserDto {
-    private String writer;
+    private String username;
     private String password;
 }

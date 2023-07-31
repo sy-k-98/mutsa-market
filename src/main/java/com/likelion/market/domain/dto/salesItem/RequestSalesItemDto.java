@@ -13,7 +13,7 @@ public class RequestSalesItemDto {
     private String imageUrl;
     private Integer minPriceWanted;
     private String status;
-    private String writer;
+    private String username;
     private String password;
 
 }

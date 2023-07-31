@@ -7,7 +7,7 @@ import lombok.Data;
 public class RequestCommentDto {
     private Long id;
     private Long itemId;
-    private String writer;
+    private String username;
     private String password;
     private String content;
     private String reply;

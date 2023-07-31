@@ -9,6 +9,6 @@ public class RequestNegotiationDto {
     private SalesItem salesItem;
     private Integer suggestedPrice;
     private String status;
-    private String writer;
+    private String username;
     private String password;
 }
