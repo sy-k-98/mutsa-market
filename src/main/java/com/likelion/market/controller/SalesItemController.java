@@ -23,8 +23,8 @@ public class SalesItemController {
 
     @PostMapping
     public ResponseEntity<ResponseDto> create(@RequestBody RequestSalesItemDto salesItemDto) {
-        salesItemService.createPost(salesItemDto);
-        return ResponseEntity.ok(ResponseDto.getMessage("댓글이 등록되었습니다."));
+        salesItemService.addItem(salesItemDto);
+        return ResponseEntity.ok(ResponseDto.getMessage("물품이 등록되었습니다."));
     }
 
     @GetMapping
@@ -32,32 +32,32 @@ public class SalesItemController {
             @RequestParam("page") Integer page,
             @RequestParam("limit") Integer limit
     ) {
-        return ResponseEntity.ok(salesItemService.readPostPaged(page, limit));
+        return ResponseEntity.ok(salesItemService.readItemAllPaged(page, limit));
     }
 
     @GetMapping("/{itemId}")
     public ResponseEntity<ResponseSalesItemDto> read(@PathVariable("itemId") Long id) {
-        return ResponseEntity.ok(salesItemService.readPost(id));
+        return ResponseEntity.ok(salesItemService.readItem(id));
     }
 
     @PutMapping("/{itemId}")
     public ResponseEntity<ResponseDto> update(@PathVariable("itemId") Long id, @RequestBody RequestSalesItemDto requestSalesItemDto) {
-        salesItemService.updatePost(id, requestSalesItemDto);
+        salesItemService.updateItem(id, requestSalesItemDto);
         return ResponseEntity.ok(ResponseDto.getMessage("물품이 수정되었습니다."));
     }
 
     @PutMapping(value = "/{itemId}/image")
     public ResponseEntity<ResponseDto> updateImage(@PathVariable("itemId") Long id,
-                                   @RequestParam("image") MultipartFile itemImage,
-                                   @RequestParam("writer") String writer,
-                                   @RequestParam("password") String password) {
-        salesItemService.updatePostImage(id, itemImage, writer, password);
+                                                   @RequestParam("image") MultipartFile itemImage,
+                                                   @RequestParam("username") String username,
+                                                   @RequestParam("password") String password) {
+        salesItemService.updateItemImage(id, itemImage, username, password);
         return ResponseEntity.ok(ResponseDto.getMessage("이미지가 등록되었습니다."));
     }
 
     @DeleteMapping("/{itemId}")
     public ResponseEntity<ResponseDto> delete(@PathVariable("itemId") Long id, @RequestBody RequestCommentUserDto requestCommentUserDto) {
-        salesItemService.deletePost(id, requestCommentUserDto);
+        salesItemService.deleteItem(id, requestCommentUserDto);
         return ResponseEntity.ok(ResponseDto.getMessage("물품을 삭제했습니다."));
     }
 

@@ -4,6 +4,7 @@ import com.likelion.market.jwt.JwtTokenFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -22,8 +23,8 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/token/issue", "/users/login", "/users/register")
-                        .permitAll()
+                        .requestMatchers("/users/login", "/users/register").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/items", "/items/{itemId}", "/items/{itemId}/comments").permitAll()
                         .anyRequest()
                         .authenticated()
                 )
@@ -31,9 +32,7 @@ public class WebSecurityConfig {
                         sessionManagement -> sessionManagement
                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .addFilterBefore(
-                        jwtTokenFilter, AuthorizationFilter.class
-                );
+                .addFilterBefore(jwtTokenFilter, AuthorizationFilter.class);
 
         return http.build();
     }

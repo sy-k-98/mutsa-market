@@ -22,8 +22,8 @@ public class CommentController {
 
     @PostMapping
     public ResponseEntity<ResponseDto> create(@PathVariable("itemId") Long itemId,
-                                 @RequestBody RequestCommentDto dto) {
-        commentService.createComment(itemId, dto);
+                                              @RequestBody RequestCommentDto dto) {
+        commentService.addComment(itemId, dto);
         return ResponseEntity.ok(ResponseDto.getMessage("댓글이 등록되었습니다."));
     }
 
@@ -37,24 +37,24 @@ public class CommentController {
     @PutMapping("/{commentId}")
     public ResponseEntity<ResponseDto> update(@PathVariable("itemId") Long itemId,
                                               @PathVariable("commentId") Long commentId,
-                                              @RequestBody RequestCommentDto requestCommentDto) {
-        commentService.updateComment(itemId, commentId, requestCommentDto);
+                                              @RequestBody RequestCommentDto dto) {
+        commentService.updateComment(itemId, commentId, dto);
         return ResponseEntity.ok(ResponseDto.getMessage("댓글이 수정되었습니다."));
     }
 
     @PutMapping("/{commentId}/reply")
     public ResponseEntity<ResponseDto> createReply(@PathVariable("itemId") Long itemId,
                                                    @PathVariable("commentId") Long commentId,
-                                                   @RequestBody RequestCommentReplyDto requestCommentReplyDto) {
-        commentService.createCommentReply(itemId, commentId, requestCommentReplyDto);
+                                                   @RequestBody RequestCommentReplyDto dto) {
+        commentService.addCommentReply(itemId, commentId, dto);
         return ResponseEntity.ok(ResponseDto.getMessage("댓글에 답변이 추가되었습니다."));
     }
 
     @DeleteMapping("/{commentId}")
     public ResponseEntity<ResponseDto> delete(@PathVariable("itemId") Long itemId,
                                               @PathVariable("commentId") Long commentId,
-                                              @RequestBody RequestCommentUserDto requestCommentUserDto) {
-        commentService.deleteComment(itemId, commentId, requestCommentUserDto);
+                                              @RequestBody RequestCommentUserDto dto) {
+        commentService.deleteComment(itemId, commentId, dto);
         return ResponseEntity.ok(ResponseDto.getMessage("댓글을 삭제했습니다."));
     }
 

@@ -1,9 +1,9 @@
 package com.likelion.market.domain.entity;
 
 import com.likelion.market.domain.dto.comment.RequestCommentDto;
+import com.likelion.market.domain.dto.comment.RequestCommentReplyDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -30,7 +30,6 @@ public class Comment {
     public static Comment fromDto(RequestCommentDto commentDto) {
         Comment comment = new Comment();
         comment.setContent(commentDto.getContent());
-        comment.setReply(commentDto.getReply());
 
         return comment;
     }
@@ -44,5 +43,15 @@ public class Comment {
         this.salesItem = salesItem;
         salesItem.getComments().add(this);
     }
+
+    public void setReply(RequestCommentReplyDto dto) {
+        this.reply = dto.getReply();
+    }
+
+    public void updateComment(RequestCommentDto dto) {
+        this.content = dto.getContent();
+    }
+
+
 
 }

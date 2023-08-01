@@ -21,42 +21,41 @@ public class NegotiationController {
 
     @PostMapping
     public ResponseEntity<ResponseDto> create(@PathVariable("itemId") Long itemId,
-                                              @RequestBody RequestNegotiationDto requestNegotiationDto) {
-        negotiationService.createProposal(itemId, requestNegotiationDto);
+                                              @RequestBody RequestNegotiationDto dto) {
+        negotiationService.addProposal(itemId, dto);
         return ResponseEntity.ok(ResponseDto.getMessage("구매 제안이 등록되었습니다."));
     }
 
     @GetMapping
-    public ResponseEntity<Page<ResponseNegotiationDto> >readAll(@PathVariable("itemId") Long itemId,
-                                                @RequestParam("writer") String writer,
-                                                @RequestParam("password") String password,
-                                                @RequestParam("page") Integer page) {
-        return ResponseEntity.ok(negotiationService.readProposals(itemId, writer, password, page));
+    public ResponseEntity<Page<ResponseNegotiationDto>> readAll(@PathVariable("itemId") Long itemId,
+                                                                @RequestParam("username") String username,
+                                                                @RequestParam("password") String password,
+                                                                @RequestParam("page") Integer page) {
+        return ResponseEntity.ok(negotiationService.readProposals(itemId, username, password, page));
     }
 
     @PutMapping("/{proposalId}")
     public ResponseEntity<ResponseDto> update(@PathVariable("itemId") Long itemId,
-                              @PathVariable("proposalId") Long proposalId,
-                              @RequestBody RequestNegotiationDto requestNegotiationDto) {
-        if (requestNegotiationDto.getStatus() == null) {
-            negotiationService.updateProposal(itemId, proposalId, requestNegotiationDto);
+                                              @PathVariable("proposalId") Long proposalId,
+                                              @RequestBody RequestNegotiationDto dto) {
+        if (dto.getStatus() == null) {
+            negotiationService.updateProposal(itemId, proposalId, dto);
             return ResponseEntity.ok(ResponseDto.getMessage("제안이 수정되었습니다."));
-        }
-        else {
-            negotiationService.updateStatus(itemId, proposalId, requestNegotiationDto);
-            if (requestNegotiationDto.getStatus().equals("수락") || requestNegotiationDto.getStatus().equals("거절"))
-                return ResponseEntity.ok(ResponseDto.getMessage("제안의 상태가 변경되었습니다."));
-            else if (requestNegotiationDto.getStatus().equals("확정"))
+        } else {
+            if (dto.getStatus().equals("확정")) {
+                negotiationService.acceptProposal(itemId, proposalId, dto);
                 return ResponseEntity.ok(ResponseDto.getMessage("구매가 확정되었습니다."));
-
+            } else {
+                negotiationService.updateStatus(itemId, proposalId, dto);
+                return ResponseEntity.ok(ResponseDto.getMessage("제안의 상태가 변경되었습니다."));
+            }
         }
-        return null;
     }
 
     @DeleteMapping("/{proposalId}")
     public ResponseEntity<ResponseDto> delete(@PathVariable("itemId") Long itemId,
-                              @PathVariable("proposalId") Long proposalId,
-                              @RequestBody RequestCommentUserDto dto) {
+                                              @PathVariable("proposalId") Long proposalId,
+                                              @RequestBody RequestCommentUserDto dto) {
         negotiationService.deleteProposal(itemId, proposalId, dto);
         return ResponseEntity.ok(ResponseDto.getMessage("제안을 삭제했습니다."));
     }

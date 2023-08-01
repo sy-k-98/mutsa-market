@@ -17,7 +17,7 @@ public class Negotiation {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id")
+    @JoinColumn(name = "salesItem_id")
     private SalesItem salesItem;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,7 +32,6 @@ public class Negotiation {
     public static Negotiation fromDto(RequestNegotiationDto requestNegotiationDto) {
         Negotiation negotiation = new Negotiation();
         negotiation.setSuggestedPrice(requestNegotiationDto.getSuggestedPrice());
-        negotiation.setSalesItem(requestNegotiationDto.getSalesItem());
         negotiation.setStatus("제안");
 
         return negotiation;
@@ -51,4 +50,10 @@ public class Negotiation {
         this.salesItem = salesItem;
         salesItem.getNegotiations().add(this);
     }
+
+    public void updatePrice(RequestNegotiationDto dto) {
+        this.suggestedPrice = dto.getSuggestedPrice();
+    }
+
+
 }

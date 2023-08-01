@@ -4,9 +4,11 @@ import com.likelion.market.domain.dto.comment.RequestCommentUserDto;
 import com.likelion.market.domain.dto.negotiation.RequestNegotiationDto;
 import com.likelion.market.domain.dto.negotiation.ResponseNegotiationDto;
 import com.likelion.market.domain.entity.Negotiation;
-import com.likelion.market.repository.NegotiationRepository;
 import com.likelion.market.domain.entity.SalesItem;
+import com.likelion.market.domain.entity.User;
+import com.likelion.market.repository.NegotiationRepository;
 import com.likelion.market.repository.SalesItemRepository;
+import com.likelion.market.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -14,11 +16,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -27,104 +31,124 @@ public class NegotiationService {
 
     private final SalesItemRepository salesItemRepository;
     private final NegotiationRepository negotiationRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public void createProposal(Long itemId, RequestNegotiationDto dto) {
-        if (!salesItemRepository.existsById(itemId))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    public void addProposal(Long itemId, RequestNegotiationDto dto) {
+        checkUserToken(dto.getUsername());
+        User user = userRepository.findByUsername(dto.getUsername()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        SalesItem salesItem = salesItemRepository.findById(itemId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        checkUserPassword(dto.getPassword(), user.getPassword());
 
-        Negotiation proposal = Negotiation.fromDto(dto);
-        negotiationRepository.save(proposal);
+        Negotiation negotiation = Negotiation.fromDto(dto);
+        negotiation.setSalesItem(salesItem);
+        negotiation.setUser(user);
+        negotiationRepository.save(negotiation);
     }
 
-    public Page<ResponseNegotiationDto> readProposals(Long itemId, String writer, String password, Integer page) {
-        if (!salesItemRepository.existsById(itemId))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-
+    public Page<ResponseNegotiationDto> readProposals(Long itemId, String username, String password, Integer page) {
+        checkUserToken(username);
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        SalesItem salesItem = salesItemRepository.findById(itemId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         Pageable pageable = PageRequest.of(
                 page, 25, Sort.by("id")
         );
 
-        SalesItem salesItem = salesItemRepository.findById(itemId).get();
-        if (writer.equals(salesItem.getWriter()) && password.equals(salesItem.getPassword()))
-        {
-            Page<Negotiation> proposalPage = negotiationRepository.findAll(pageable);
-            Page<ResponseNegotiationDto> proposalResponseDtoPage = proposalPage.map(ResponseNegotiationDto::fromEntity);
-            return proposalResponseDtoPage;
+        Page<Negotiation> negotiationPage;
+        // 글쓴이는 모든 제안 볼 수 있음
+        if (user.getUsername().equals(salesItem.getUser().getUsername()) && passwordEncoder.matches(password, user.getPassword())) {
+            negotiationPage = negotiationRepository.findAllBySalesItem(salesItem, pageable);
+            return negotiationPage.map(ResponseNegotiationDto::fromEntity);
         }
+        // 댓글 쓴 사람은 본인글만 볼 수 있음
         else {
-            Page<Negotiation> proposalPage = negotiationRepository.findByWriterAndPassword(writer, password, pageable);
-            Page<ResponseNegotiationDto> proposalResponseDtoPage = proposalPage.map(ResponseNegotiationDto::fromEntity);
-            return proposalResponseDtoPage;
+            negotiationPage = negotiationRepository.findAllBySalesItemIdAndUserId(itemId, user.getId(), pageable);
+            return negotiationPage.map(ResponseNegotiationDto::fromEntity);
         }
     }
 
     public void updateProposal(Long itemId, Long proposalId, RequestNegotiationDto dto) {
-        Optional<SalesItem> optionalItem = salesItemRepository.findById(itemId);
-        if (optionalItem.isEmpty())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        checkUserToken(dto.getUsername());
+        SalesItem salesItem = salesItemRepository.findById(itemId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Negotiation negotiation = negotiationRepository.findById(proposalId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        checkSameItem(salesItem, negotiation);
+        checkUserMatch(negotiation, dto.getUsername(), dto.getPassword());
 
-        Optional<Negotiation> optionalProposal = negotiationRepository.findById(proposalId);
-        if (optionalProposal.isEmpty())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-
-        Negotiation proposal = optionalProposal.get();
-        if (dto.getWriter().equals(proposal.getWriter())
-                && dto.getPassword().equals(proposal.getPassword())) {
-            proposal.setSuggestedPrice(dto.getSuggestedPrice());
-            negotiationRepository.save(proposal);
-        } else throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        negotiation.updatePrice(dto);
+        negotiationRepository.save(negotiation);
     }
 
     public void updateStatus(Long itemId, Long proposalId, RequestNegotiationDto dto) {
-        Optional<SalesItem> optionalItem = salesItemRepository.findById(itemId);
-        if (optionalItem.isEmpty())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        checkUserToken(dto.getUsername());
+        SalesItem salesItem = salesItemRepository.findById(itemId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Negotiation negotiation = negotiationRepository.findById(proposalId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        checkSameItem(salesItem, negotiation);
+        checkUserMatch(salesItem, dto.getUsername(), dto.getPassword());
 
-        Optional<Negotiation> optionalProposal = negotiationRepository.findById(proposalId);
-        if (optionalProposal.isEmpty())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        negotiation.setStatus(dto.getStatus()); // 수락 / 거절
+        negotiationRepository.save(negotiation);
+    }
 
-        SalesItem salesItem = optionalItem.get();
-        Negotiation proposal = optionalProposal.get();
+    public void acceptProposal(Long itemId, Long proposalId, RequestNegotiationDto dto) {
+        checkUserToken(dto.getUsername());
+        SalesItem salesItem = salesItemRepository.findById(itemId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Negotiation negotiation = negotiationRepository.findById(proposalId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        checkSameItem(salesItem, negotiation);
+        checkUserMatch(negotiation, dto.getUsername(), dto.getPassword());
 
-        if (dto.getStatus().equals("수락") || dto.getStatus().equals("거절")) {
-            if (dto.getWriter().equals(salesItem.getWriter())
-                    && dto.getPassword().equals(salesItem.getPassword())) {
-                proposal.setStatus(dto.getStatus());
-                negotiationRepository.save(proposal);
-            } else
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        if (negotiation.getStatus().equals("수락")) {
+            negotiation.setStatus(dto.getStatus()); // 확정
+            negotiationRepository.save(negotiation);
 
-        } else if (dto.getStatus().equals("확정")) {
-            if (dto.getWriter().equals(proposal.getWriter())
-                    && dto.getPassword().equals(proposal.getPassword())
-                    && proposal.getStatus().equals("수락")) {
-                salesItem.setStatus("판매완료");
-                proposal.setStatus(dto.getStatus());
-                salesItemRepository.save(salesItem);
-                negotiationRepository.save(proposal);
+            salesItem.setStatus(dto.getStatus()); // 판매완료
+            salesItemRepository.save(salesItem);
 
-                List<Negotiation> proposalList = negotiationRepository.findByIdNot(proposalId);
-                for (Negotiation p : proposalList) {
-                    p.setStatus("거절");
-                    negotiationRepository.save(p);
+            List<Negotiation> negotiationList = negotiationRepository.findAllBySalesItem(salesItem);
+            for (Negotiation ne : negotiationList) {
+                if (!ne.getStatus().equals("확정")) {
+                    ne.setStatus("거절");
+                    negotiationRepository.save(ne);
                 }
             }
-        } else
+        } else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
     }
 
     public void deleteProposal(Long itemId, Long proposalId, RequestCommentUserDto dto) {
-        if (!salesItemRepository.existsById(itemId))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        if (!negotiationRepository.existsById(proposalId))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-
-        Negotiation proposal = negotiationRepository.findById(proposalId).get();
-        if (!dto.getPassword().equals(proposal.getPassword()))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        checkUserToken(dto.getUsername());
+        SalesItem salesItem = salesItemRepository.findById(itemId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        Negotiation negotiation = negotiationRepository.findById(proposalId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        checkSameItem(salesItem, negotiation);
+        checkUserMatch(negotiation, dto.getUsername(), dto.getPassword());
 
         negotiationRepository.deleteById(proposalId);
+    }
+
+    private void checkSameItem(SalesItem salesItem, Negotiation negotiation) {
+        if (!salesItem.getId().equals(negotiation.getSalesItem().getId()))
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    private void checkUserToken(String username) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!authentication.getName().equals(username))
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    private void checkUserMatch(SalesItem salesItem, String username, String password) {
+        if (!salesItem.getUser().getUsername().equals(username) || !passwordEncoder.matches(password, salesItem.getUser().getPassword()))
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    private void checkUserMatch(Negotiation negotiation, String username, String password) {
+        if (!negotiation.getUser().getUsername().equals(username) || !passwordEncoder.matches(password, negotiation.getUser().getPassword()))
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    private void checkUserPassword(String inputPassword, String password) {
+        if (!passwordEncoder.matches(inputPassword, password))
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
 }

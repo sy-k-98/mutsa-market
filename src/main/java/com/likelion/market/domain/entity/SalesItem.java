@@ -7,11 +7,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @Entity
-@Table(name = "sales_item")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class SalesItem {
@@ -36,10 +36,10 @@ public class SalesItem {
     private User user;
 
     @OneToMany(mappedBy = "salesItem", cascade = CascadeType.ALL)
-    private List<Comment> comments;
+    private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "salesItem", cascade = CascadeType.ALL)
-    private List<Negotiation> negotiations;
+    private List<Negotiation> negotiations = new ArrayList<>();
 
     public static SalesItem fromDto(RequestSalesItemDto requestSalesItemDto) {
         SalesItem salesItem = new SalesItem();
@@ -59,5 +59,15 @@ public class SalesItem {
     public void setUser(User user) {
         this.user = user;
         user.getSalesItems().add(this);
+    }
+
+    public void updateInfo(RequestSalesItemDto dto) {
+        this.title = dto.getTitle();
+        this.description = dto.getDescription();
+        this.minPriceWanted = dto.getMinPriceWanted();
+    }
+
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }
