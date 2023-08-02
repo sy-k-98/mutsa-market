@@ -18,7 +18,7 @@
 
 ## 📌 API 명세서
 <details>
-<summary> 작동 확인 전 세팅</summary>
+<summary> ✨ 작동 확인 전 세팅 ✨</summary>
 1️⃣ 아래 PostMan Document에서 "Run in PostMan"을 누르고 Import할 Workspace를 선택한다.
 <img src="img/포스트맨환경설정3.png">
 
