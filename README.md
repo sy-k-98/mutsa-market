@@ -6,6 +6,9 @@
 ## 멋사마켓 v1.0
 [MiniProject_Basic_KimSoyoung](https://github.com/likelion-backend-5th/MiniProject_Basic_KimSoyoung)
 
+## ⌛️ 개발 기간
+2023.07.26 ~ 2023.08.02
+
 ## ⚙️ 사용 기술 및 개발 환경
 - `Java17`
 - `Spring Boot 3.1.1`
@@ -107,4 +110,4 @@
   + 인증된 사용자만 사용
 
 ## 🪧 DB ERD
-<img src="img/erd.png">
+<img src="img/erd-update.png">
