@@ -111,3 +111,6 @@
 
 ## 🪧 DB ERD
 <img src="img/erd-update.png">
+
+## 🤗 코드 리뷰를 위한 Team Repository
+<https://github.com/likelion-backend-5th/PeerReview_5Team>
